@@ -1,0 +1,17 @@
+# Local Python environment
+.venv/
+
+# Python cache files
+__pycache__/
+*.py[cod]
+
+# Generated local database
+acme_claims.db
+
+# Runtime-only timestamp
+output/run_timestamp.txt
+
+# Local editor and OS files
+.vscode/
+.DS_Store
+Thumbs.db
