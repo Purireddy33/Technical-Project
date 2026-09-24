@@ -1,10 +1,30 @@
 WITH latest_enrollment AS (
-    SELECT *,
+    SELECT member_id,
+           member_first_name,
+           member_last_name,
+           pcp_id,
+           enddate,
+           eligibility_snapshot_month,
+           effdate,
            ROW_NUMBER() OVER (
                PARTITION BY member_id
                ORDER BY eligibility_snapshot_month DESC, effdate DESC, enddate DESC
            ) AS row_number
     FROM enrollment
+),
+provider_lookup AS (
+    SELECT provider_id, provider_first_name, provider_last_name
+    FROM (
+        SELECT provider_id,
+               provider_first_name,
+               provider_last_name,
+               ROW_NUMBER() OVER (
+                   PARTITION BY provider_id
+                   ORDER BY provider_npi_number, provider_name
+               ) AS row_number
+        FROM providers
+    )
+    WHERE row_number = 1
 ),
 med AS (
     SELECT
@@ -40,6 +60,6 @@ SELECT
 FROM latest_enrollment e
 LEFT JOIN med m ON m.member_id = e.member_id
 LEFT JOIN pharm ph ON ph.member_id = e.member_id
-LEFT JOIN providers p ON p.provider_id = e.pcp_id
+LEFT JOIN provider_lookup p ON p.provider_id = e.pcp_id
 WHERE e.row_number = 1
 ORDER BY e.member_id;

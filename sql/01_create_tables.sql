@@ -53,6 +53,10 @@ CREATE TABLE IF NOT EXISTS pharmacy_claims (
     dispensing_provider_id TEXT
 );
 
-CREATE INDEX IF NOT EXISTS idx_medical_member ON medical_claims(member_id);
-CREATE INDEX IF NOT EXISTS idx_pharmacy_member ON pharmacy_claims(member_id);
-CREATE INDEX IF NOT EXISTS idx_enrollment_member ON enrollment(member_id);
+CREATE INDEX IF NOT EXISTS idx_providers_provider_id ON providers(provider_id);
+CREATE INDEX IF NOT EXISTS idx_enrollment_member_id ON enrollment(member_id);
+CREATE INDEX IF NOT EXISTS idx_enrollment_pcp_id ON enrollment(pcp_id);
+CREATE INDEX IF NOT EXISTS idx_medical_member_id ON medical_claims(member_id);
+CREATE INDEX IF NOT EXISTS idx_medical_claim_id ON medical_claims(claim_id);
+CREATE INDEX IF NOT EXISTS idx_medical_procedure ON medical_claims(procedure_code);
+CREATE INDEX IF NOT EXISTS idx_pharmacy_member_id ON pharmacy_claims(member_id);

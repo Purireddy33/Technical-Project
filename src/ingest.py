@@ -158,20 +158,10 @@ def build_database():
     )
 
     provider_rows = read_delimited_file(BASE_DIR / "acme_data_providers.txt", "|")
+    provider_values = []
     for row in provider_rows:
         parsed_name = split_provider_name(row.get("PROVIDER_NAME"))
-        cursor.execute(
-            """
-            INSERT INTO providers (
-                provider_id,
-                provider_npi_number,
-                provider_name,
-                provider_first_name,
-                provider_middle_initial,
-                provider_last_name,
-                supplier_name
-            ) VALUES (?, ?, ?, ?, ?, ?, ?)
-            """,
+        provider_values.append(
             (
                 row.get("PROVIDER_ID"),
                 row.get("PROVIDER_NPI_NUMBER"),
@@ -180,113 +170,148 @@ def build_database():
                 parsed_name["provider_middle_initial"],
                 parsed_name["provider_last_name"],
                 row.get("SUPPLIER_NAME"),
-            ),
+            )
         )
+    cursor.executemany(
+        """
+        INSERT INTO providers (
+            provider_id,
+            provider_npi_number,
+            provider_name,
+            provider_first_name,
+            provider_middle_initial,
+            provider_last_name,
+            supplier_name
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)
+        """,
+        provider_values,
+    )
 
     enrollment_rows = read_delimited_file(BASE_DIR / "acme_data_enrollment.txt", "|")
-    for row in enrollment_rows:
-        cursor.execute(
-            """
-            INSERT INTO enrollment (
-                member_id,
-                member_first_name,
-                member_last_name,
-                date_of_birth,
-                date_of_death,
-                gender,
-                eligibility_snapshot_month,
-                effdate,
-                enddate,
-                plan_code,
-                pcp_id
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-            (
-                row.get("MEMBER_ID"),
-                row.get("MEMBER_FIRST_NAME"),
-                row.get("MEMBER_LAST_NAME"),
-                row.get("DATE_OF_BIRTH"),
-                row.get("DATE_OF_DEATH"),
-                row.get("GENDER"),
-                row.get("ELIGIBILITY_SNAPSHOT_MONTH"),
-                row.get("EFFDATE"),
-                row.get("ENDDATE"),
-                row.get("PLAN_CODE"),
-                row.get("PCP_ID"),
-            ),
+    enrollment_values = [
+        (
+            row.get("MEMBER_ID"),
+            row.get("MEMBER_FIRST_NAME"),
+            row.get("MEMBER_LAST_NAME"),
+            row.get("DATE_OF_BIRTH"),
+            row.get("DATE_OF_DEATH"),
+            row.get("GENDER"),
+            row.get("ELIGIBILITY_SNAPSHOT_MONTH"),
+            row.get("EFFDATE"),
+            row.get("ENDDATE"),
+            row.get("PLAN_CODE"),
+            row.get("PCP_ID"),
         )
+        for row in enrollment_rows
+    ]
+    cursor.executemany(
+        """
+        INSERT INTO enrollment (
+            member_id,
+            member_first_name,
+            member_last_name,
+            date_of_birth,
+            date_of_death,
+            gender,
+            eligibility_snapshot_month,
+            effdate,
+            enddate,
+            plan_code,
+            pcp_id
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        enrollment_values,
+    )
 
     medical_rows = read_delimited_file(BASE_DIR / "acme_data_medical_claims.txt", "|")
-    for row in medical_rows:
-        cursor.execute(
-            """
-            INSERT INTO medical_claims (
-                claim_id,
-                member_id,
-                line_number,
-                claim_type_code,
-                charge_submitted,
-                allowed_amount,
-                co_insurance,
-                copayment,
-                deductible,
-                provider_id,
-                date_of_first_service,
-                date_of_last_service,
-                procedure_code,
-                procedure_modifier_code_1,
-                place_of_service_code
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-            (
-                row.get("CLAIM_ID"),
-                row.get("member_id"),
-                row.get("LINE_NUMBER"),
-                row.get("CLAIM_TYPE_CODE"),
-                row.get("CHARGE_SUBMITTED"),
-                row.get("ALLOWED_AMOUNT"),
-                row.get("CO_INSURANCE"),
-                row.get("COPAYMENT"),
-                row.get("DEDUCTIBLE"),
-                row.get("PROVIDER_ID"),
-                row.get("DATE_OF_FIRST_SERVICE"),
-                row.get("DATE_OF_LAST_SERVICE"),
-                row.get("PROCEDURE_CODE"),
-                row.get("PROCEDURE_MODIFIER_CODE_1"),
-                row.get("PLACE_OF_SERVICE_CODE"),
-            ),
+    medical_values = [
+        (
+            row.get("CLAIM_ID"),
+            row.get("member_id"),
+            row.get("LINE_NUMBER"),
+            row.get("CLAIM_TYPE_CODE"),
+            row.get("CHARGE_SUBMITTED"),
+            row.get("ALLOWED_AMOUNT"),
+            row.get("CO_INSURANCE"),
+            row.get("COPAYMENT"),
+            row.get("DEDUCTIBLE"),
+            row.get("PROVIDER_ID"),
+            row.get("DATE_OF_FIRST_SERVICE"),
+            row.get("DATE_OF_LAST_SERVICE"),
+            row.get("PROCEDURE_CODE"),
+            row.get("PROCEDURE_MODIFIER_CODE_1"),
+            row.get("PLACE_OF_SERVICE_CODE"),
         )
+        for row in medical_rows
+    ]
+    cursor.executemany(
+        """
+        INSERT INTO medical_claims (
+            claim_id,
+            member_id,
+            line_number,
+            claim_type_code,
+            charge_submitted,
+            allowed_amount,
+            co_insurance,
+            copayment,
+            deductible,
+            provider_id,
+            date_of_first_service,
+            date_of_last_service,
+            procedure_code,
+            procedure_modifier_code_1,
+            place_of_service_code
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        medical_values,
+    )
 
     pharmacy_rows = read_delimited_file(BASE_DIR / "acme_data_pharmacy_claims.txt", ",")
-    for row in pharmacy_rows:
-        cursor.execute(
-            """
-            INSERT INTO pharmacy_claims (
-                claim_id,
-                member_id,
-                allowed_amount,
-                co_insurance,
-                copayment,
-                deductible,
-                rx_refill_number,
-                date_of_service,
-                date_paid,
-                dispensing_provider_id
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-            (
-                row.get("CLAIM_ID"),
-                row.get("MEMBER_ID"),
-                row.get("ALLOWED_AMOUNT"),
-                row.get("CO_INSURANCE"),
-                row.get("COPAYMENT"),
-                row.get("DEDUCTIBLE"),
-                row.get("RX_REFILL_NUMBER"),
-                row.get("DATE_OF_SERVICE"),
-                row.get("DATE_PAID"),
-                row.get("DISPENSING_PROVIDER_ID"),
-            ),
+    pharmacy_values = [
+        (
+            row.get("CLAIM_ID"),
+            row.get("MEMBER_ID"),
+            row.get("ALLOWED_AMOUNT"),
+            row.get("CO_INSURANCE"),
+            row.get("COPAYMENT"),
+            row.get("DEDUCTIBLE"),
+            row.get("RX_REFILL_NUMBER"),
+            row.get("DATE_OF_SERVICE"),
+            row.get("DATE_PAID"),
+            row.get("DISPENSING_PROVIDER_ID"),
         )
+        for row in pharmacy_rows
+    ]
+    cursor.executemany(
+        """
+        INSERT INTO pharmacy_claims (
+            claim_id,
+            member_id,
+            allowed_amount,
+            co_insurance,
+            copayment,
+            deductible,
+            rx_refill_number,
+            date_of_service,
+            date_paid,
+            dispensing_provider_id
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        pharmacy_values,
+    )
+
+    cursor.executescript(
+        """
+        CREATE INDEX idx_providers_provider_id ON providers(provider_id);
+        CREATE INDEX idx_enrollment_member_id ON enrollment(member_id);
+        CREATE INDEX idx_enrollment_pcp_id ON enrollment(pcp_id);
+        CREATE INDEX idx_medical_member_id ON medical_claims(member_id);
+        CREATE INDEX idx_medical_claim_id ON medical_claims(claim_id);
+        CREATE INDEX idx_medical_procedure ON medical_claims(procedure_code);
+        CREATE INDEX idx_pharmacy_member_id ON pharmacy_claims(member_id);
+        """
+    )
 
     connection.commit()
     connection.close()
@@ -300,12 +325,32 @@ def export_reports():
 
     member_report_query = """
         WITH latest_enrollment AS (
-            SELECT *,
+             SELECT member_id,
+                 member_first_name,
+                 member_last_name,
+                 pcp_id,
+                 enddate,
+                 eligibility_snapshot_month,
+                 effdate,
                    ROW_NUMBER() OVER (
                        PARTITION BY member_id
                        ORDER BY eligibility_snapshot_month DESC, effdate DESC, enddate DESC
                    ) AS row_number
             FROM enrollment
+        ),
+        provider_lookup AS (
+            SELECT provider_id, provider_first_name, provider_last_name
+            FROM (
+                SELECT provider_id,
+                       provider_first_name,
+                       provider_last_name,
+                       ROW_NUMBER() OVER (
+                           PARTITION BY provider_id
+                           ORDER BY provider_npi_number, provider_name
+                       ) AS row_number
+                FROM providers
+            )
+            WHERE row_number = 1
         ),
         med AS (
             SELECT member_id,
@@ -339,7 +384,7 @@ def export_reports():
         FROM latest_enrollment e
         LEFT JOIN med m ON m.member_id = e.member_id
         LEFT JOIN pharm ph ON ph.member_id = e.member_id
-        LEFT JOIN providers p ON p.provider_id = e.pcp_id
+        LEFT JOIN provider_lookup p ON p.provider_id = e.pcp_id
         WHERE e.row_number = 1
         ORDER BY e.member_id
     """
@@ -354,6 +399,7 @@ def export_reports():
         FROM medical_claims m1
         JOIN medical_claims m2
           ON m1.claim_id = m2.claim_id
+                 AND m1.line_number <> m2.line_number
         WHERE m1.procedure_code = '99214'
           AND m2.procedure_code = '3074F'
         ORDER BY m1.claim_id

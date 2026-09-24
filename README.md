@@ -53,12 +53,42 @@ WHERE NOT EXISTS (
 )
 ```
 
-The subquery is not connected to `mc`. It only asks whether the eligibility table has any rows. It needs to compare the current claim's member to the enrollment table:
+The `NOT EXISTS` subquery is not connected to the outer medical-claims query. It checks whether the enrollment table contains any rows, but it never compares the current claim's `member_id` with `eligibility.member_id`.
+
+If `dbo.eligibility` has at least one row, the subquery is true for every claim, so `NOT EXISTS` is false for every claim. If the table is empty, every medical claim is returned. The selected column inside `EXISTS` is not the problem; `EXISTS` only checks whether a row is returned.
+
+The corrected correlated query is:
 
 ```sql
 SELECT mc.*
-FROM medical_claims mc
-LEFT JOIN enrollment e
+FROM dbo.medical_claims AS mc
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM dbo.eligibility AS e
+    WHERE e.member_id = mc.member_id
+);
+```
+
+The important part is `WHERE e.member_id = mc.member_id`. It checks each medical claim against the enrollment table separately.
+
+An equivalent `LEFT JOIN` solution is:
+
+```sql
+SELECT mc.*
+FROM dbo.medical_claims AS mc
+LEFT JOIN dbo.eligibility AS e
+    ON e.member_id = mc.member_id
+WHERE e.member_id IS NULL;
+```
+
+The `LEFT JOIN` keeps every medical claim. When no enrollment row matches, the enrollment columns are `NULL`, so the final condition identifies the orphan claims.
+
+This project uses SQLite, where the equivalent table names are `medical_claims` and `enrollment` without the `dbo` schema prefix:
+
+```sql
+SELECT mc.*
+FROM medical_claims AS mc
+LEFT JOIN enrollment AS e
     ON e.member_id = mc.member_id
 WHERE e.member_id IS NULL;
 ```

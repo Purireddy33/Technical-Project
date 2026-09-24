@@ -8,6 +8,7 @@ SELECT DISTINCT
 FROM medical_claims m1
 JOIN medical_claims m2
   ON m1.claim_id = m2.claim_id
+ AND m1.line_number <> m2.line_number
 WHERE m1.procedure_code = '99214'
   AND m2.procedure_code = '3074F'
 ORDER BY m1.claim_id;
